@@ -1,6 +1,6 @@
-## ICP PRG (ICAgile Programming) 강의 Unit Test
+## ICP PRG (ICAgile Programming) 강의 Refectoring
 
-- 본 실습자료는 ICAgile Programming 과정 Unit Test를 실습하기 위한 실습 자료입니다.
+- 본 실습자료는 ICAgile Programming 과정 Refectoring을 실습하기 위한 실습 자료입니다.
 
 ### Environment
 - Java 11

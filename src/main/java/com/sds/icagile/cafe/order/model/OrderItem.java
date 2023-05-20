@@ -48,6 +48,7 @@ public class OrderItem {
         this.count = count;
     }
 
+    public Beverage getBeverage() { return beverage; }
     public void setBeverage(Beverage beverage) {
         this.beverage = beverage;
     }

@@ -101,7 +101,7 @@ public class OrderService {
             orderItem.setBeverage(beverage);
             orderItem.setOrder(order);
             orderItems.add(orderItem);
-            totalCost += orderItem.getCount() * beverage.getCost();
+            totalCost += orderItem.getCount() * orderItem.getBeverage().getCost();
         }
 
         // 2. 매월 마지막 날이면 10% 할인
@@ -112,7 +112,7 @@ public class OrderService {
         switch(payment) {
             case 1: // cash 10%
                 //2021.1.1 현금 적립률 8% -> 10%로 변경
-                //mileagePoint = totalCost * 0.05;
+                //mileagePoint = order.getTotalCost() * 0.05;
                 mileagePoint = totalCost * 0.1;
                 break;
             case 2: // credit card 5%
@@ -124,8 +124,8 @@ public class OrderService {
 
         if(payment == 3) { // pay mileage
             int customerMileage = mileageApiService.getMileages(customerId);
-            if(customerMileage >= totalCost) {
-                Mileage mileage = new Mileage(customerId, order.getId(), totalCost);
+            if(customerMileage >= order.getTotalCost()) {
+                Mileage mileage = new Mileage(customerId, order.getId(), order.getTotalCost());
                 mileageApiService.minusMileages(customerId, mileage);
             } else {
                 throw new BizException("mileage is not enough");
@@ -135,9 +135,9 @@ public class OrderService {
             mileageApiService.saveMileages(customerId, mileage);
 
             if(payment == 1) {
-                payWithCash();
+                payWithCash(order, customerId);
             } else if(payment == 2) {
-                payWithCard();
+                payWithCard(order, customerId);
             }
         }
 
@@ -163,10 +163,10 @@ public class OrderService {
         return lastDayOfMonth == todayDate;
     }
 
-    private void payWithCard() {
+    private void payWithCard(Order order, int customerId) {
     }
 
-    private void payWithCash() {
+    private void payWithCash(Order order, int customerId) {
     }
 
     /**

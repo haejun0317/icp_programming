@@ -8,6 +8,8 @@ import com.sds.icagile.cafe.beverage.model.BeverageSize;
 import com.sds.icagile.cafe.customer.CustomerService;
 import com.sds.icagile.cafe.exception.BizException;
 import com.sds.icagile.cafe.order.model.Order;
+import com.sds.icagile.cafe.order.model.OrderItem;
+import com.sds.icagile.cafe.order.model.OrderStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,11 +18,9 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,6 +53,13 @@ public class OrderServiceTest {
 
     @Captor
     ArgumentCaptor<Mileage> mileageArgumentCaptor;
+
+    @Captor
+    private ArgumentCaptor<Order> orderCaptor;
+
+    @Captor
+    private ArgumentCaptor<List<OrderItem>> orderItemsCaptor;
+
 
     private boolean isLastDayOfMonthToday = false;
 
@@ -209,6 +216,39 @@ public class OrderServiceTest {
         Mileage appliedMileage = mileageArgumentCaptor.getValue();
         assertEquals(appliedMileage.getValue(), 200.0);
     }
+
+    @Test
+    public void 신규주문정보가_저장된다() {
+        //when
+        Map<String, Object> orderItem = new HashMap<>();
+        orderItem.put("beverageId", 1);
+        orderItem.put("count", 2);
+        subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), 1);
+
+        //then
+        verify(mockOrderRepository, times(1)).save(orderCaptor.capture());
+        Order newOrder = orderCaptor.getValue();
+        assertEquals(newOrder.getStatus(), OrderStatus.WAITING);
+        assertEquals(newOrder.getPayment(), 1);
+        assertEquals(newOrder.getTotalCost(), 2000.0);
+        assertEquals(newOrder.getMileagePoint(), 200.0);
+    }
+
+    @Test
+    public void 주문시_음료목록이_저장된다() {
+        //when
+        Map<String, Object> orderItem = new HashMap<>();
+        orderItem.put("beverageId", 1);
+        orderItem.put("count", 2);
+        subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), 1);
+
+        //then
+        verify(mockOrderItemRepository, times(1)).saveAll(orderItemsCaptor.capture());
+        List<OrderItem> orderItems = orderItemsCaptor.getValue();
+        OrderItem firstBeverage = orderItems.get(0);
+        assertEquals(firstBeverage.getCount(), 2);
+    }
+
 
     class TestableOrderService extends OrderService {
 

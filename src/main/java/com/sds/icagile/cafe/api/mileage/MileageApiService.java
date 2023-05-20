@@ -13,8 +13,8 @@ public interface MileageApiService {
     int getMileages(@PathVariable("customerId") int customerId);
 
     @PutMapping("/mileages/{customerId}")
-    int minusMileages(@PathVariable("customerId") int customerId, Mileage mileage);
+    double minusMileages(@PathVariable("customerId") int customerId, Mileage mileage);
 
     @PostMapping("/mileages/{customerId}")
-    void saveMileages(@PathVariable("customerId") int customerId, Mileage mileage);
+    double saveMileages(@PathVariable("customerId") int customerId, Mileage mileage);
 }
