@@ -24,6 +24,12 @@ public class OrderControllerAPITest {
 
     @Test
     public void OrderId로_GET_API를_요청하면_해당_ORDER를_리턴한다() throws Exception {
-        //TODO - implement
+        String orderResult = "{\"id\":100,\"totalCost\":3000.0,\"mileagePoint\":100.0,\"payment\":1,\"status\":\"PREPARING\",\"orderItems\":[{\"id\":1,\"count\":3}],\"customer\":{\"id\":1,\"name\":\"customer1\"}}";
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/orders/100"))
+                .andExpect(jsonPath("$.id").value(100))
+                .andExpect(jsonPath("$.status").value("PREPARING"))
+                .andExpect(content().string(is(orderResult)))
+                .andExpect(status().isOk());
     }
 }
