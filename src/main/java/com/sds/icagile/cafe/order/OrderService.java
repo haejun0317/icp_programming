@@ -86,43 +86,25 @@ public class OrderService {
         order.setStatus(OrderStatus.WAITING);
         order.setCustomer(customer);
         order.setPayment(payment);
-        List<OrderItem> orderItems = new ArrayList<>();
-        double totalCost = 0;
 
-        // 1. 주문된 항목의 Total Cost계산
-        for(Map<String, Object> orderItemMap: orderItemList) {
-            Beverage beverage = beverageRepository.getOne((Integer) orderItemMap.get("beverageId"));
-            if(beverage == null) {
-                continue;
-            }
+        List<OrderItem> orderItems = getOrderItems(orderItemList, order);
 
-            OrderItem orderItem = new OrderItem();
-            orderItem.setCount((Integer) orderItemMap.get("count"));
-            orderItem.setBeverage(beverage);
-            orderItem.setOrder(order);
-            orderItems.add(orderItem);
-            totalCost += orderItem.getCount() * orderItem.getBeverage().getCost();
-        }
-
-        // 2. 매월 마지막 날이면 10% 할인
-        totalCost = this.getDiscountedTotalCost(totalCost);
+        double totalCost = this.getDiscountedTotalCost(getTotalCost(orderItems));
         order.setTotalCost(totalCost);
 
-        double mileagePoint = 0;
-        switch(payment) {
-            case 1: // cash 10%
-                //2021.1.1 현금 적립률 8% -> 10%로 변경
-                //mileagePoint = order.getTotalCost() * 0.05;
-                mileagePoint = totalCost * 0.1;
-                break;
-            case 2: // credit card 5%
-                mileagePoint = totalCost * 0.05;
-                break;
-            case 3: // mileage
-                break;
-        }
+        double mileagePoint = getMileagePoint(payment, totalCost);
 
-        if(payment == 3) { // pay mileage
+        pay(customerId, payment, order, mileagePoint);
+
+        order.setMileagePoint(mileagePoint);
+        orderRepository.save(order);
+        orderItemRepository.saveAll(orderItems);
+
+        return order;
+    }
+
+    private void pay(int customerId, int payment, Order order, double mileagePoint) {
+        if(payment == 3) {
             int customerMileage = mileageApiService.getMileages(customerId);
             if(customerMileage >= order.getTotalCost()) {
                 Mileage mileage = new Mileage(customerId, order.getId(), order.getTotalCost());
@@ -140,12 +122,46 @@ public class OrderService {
                 payWithCard(order, customerId);
             }
         }
+    }
 
-        order.setMileagePoint(mileagePoint);
-        orderRepository.save(order);
-        orderItemRepository.saveAll(orderItems);
+    private double getMileagePoint(int payment, double totalCost) {
+        double mileagePoint = 0;
+        switch(payment) {
+            case 1:
+                mileagePoint = totalCost * 0.1;
+                break;
+            case 2:
+                mileagePoint = totalCost * 0.05;
+                break;
+            case 3:
+                break;
+        }
+        return mileagePoint;
+    }
 
-        return order;
+    private double getTotalCost(List<OrderItem> orderItems) {
+        double totalCost = 0;
+        for (OrderItem orderItem : orderItems) {
+            totalCost += orderItem.getCount() * orderItem.getBeverage().getCost();
+        }
+        return totalCost;
+    }
+
+    private List<OrderItem> getOrderItems(List<Map<String, Object>> orderItemList, Order order) {
+        List<OrderItem> orderItems = new ArrayList<>();
+        for(Map<String, Object> orderItemMap: orderItemList) {
+            Beverage beverage = beverageRepository.getOne((Integer) orderItemMap.get("beverageId"));
+            if(beverage == null) {
+                continue;
+            }
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setCount((Integer) orderItemMap.get("count"));
+            orderItem.setBeverage(beverage);
+            orderItem.setOrder(order);
+            orderItems.add(orderItem);
+        }
+        return orderItems;
     }
 
     private double getDiscountedTotalCost(double totalCost) {
