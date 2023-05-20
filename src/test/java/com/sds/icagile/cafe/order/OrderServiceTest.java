@@ -21,8 +21,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -59,7 +59,7 @@ public class OrderServiceTest {
     @BeforeEach
     public void setUp() throws Exception {
         subject = new TestableOrderService(mockOrderRepository, mockMileageApiService, mockCustomerService, mockBeverageRepository, mockOrderItemRepository);
-        lenient().when(mockBeverageRepository.getOne(AMERICANO_ID)).thenReturn(new Beverage(AMERICANO_ID, "americano", 1000, BeverageSize.SMALL));
+        when(mockBeverageRepository.getOne(AMERICANO_ID)).thenReturn(new Beverage(AMERICANO_ID, "americano", 1000, BeverageSize.SMALL));
     }
 
     @Test
@@ -73,7 +73,7 @@ public class OrderServiceTest {
         Order result = subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), PAYMENT_CASH);
 
         //then
-        assertThat(result.getTotalCost(), is(2000.0));
+        assertEquals(result.getTotalCost(), 2000.0);
     }
 
     @Test
@@ -93,7 +93,7 @@ public class OrderServiceTest {
         Order result = subject.create(CUSTOMER_ID, Arrays.asList(orderItem, notValidOrderItem), PAYMENT_CASH);
 
         //then
-        assertThat(result.getTotalCost(), is(2000.0));
+        assertEquals(result.getTotalCost(), 2000.0);
     }
     
     @Test
@@ -109,7 +109,7 @@ public class OrderServiceTest {
         Order result = subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), PAYMENT_CASH);
 
         //then
-        assertThat(result.getTotalCost(), is(1800.0));
+        assertEquals(result.getTotalCost(), 1800.0);
 
         isLastDayOfMonthToday = false;
     }
@@ -126,7 +126,7 @@ public class OrderServiceTest {
         Order result = subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), PAYMENT_CASH);
 
         //then
-        assertThat(result.getMileagePoint(), is(200.0));
+        assertEquals(result.getMileagePoint(),200.0);
     }
 
     @Test
@@ -141,7 +141,7 @@ public class OrderServiceTest {
         Order result = subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), PAYMENT_CARD);
 
         //then
-        assertThat(result.getMileagePoint(), is(100.0));
+        assertEquals(result.getMileagePoint(), 100.0);
     }
 
     @Test
@@ -174,17 +174,40 @@ public class OrderServiceTest {
         verify(mockMileageApiService).minusMileages(eq(CUSTOMER_ID), mileageArgumentCaptor.capture());
 
         Mileage appliedMileage = mileageArgumentCaptor.getValue();
-        assertThat(appliedMileage.getValue(), is(2000.0));
+        assertEquals(appliedMileage.getValue(), 2000.0);
     }
 
     @Test
     public void 마일리지로_결제하는경우_마일리지API를_호출하여_마일리지를_적립하지_않는다() {
-        //TODO - implement
+        //given
+        when(mockMileageApiService.getMileages(CUSTOMER_ID)).thenReturn(3000);
+
+        //when
+        Map<String, Object> orderItem = new HashMap<>();
+        orderItem.put("beverageId", AMERICANO_ID);
+        orderItem.put("count", 2);
+
+        Order result = subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), PAYMENT_MILEAGE);
+
+        //then
+        verify(mockMileageApiService, never()).saveMileages(anyInt(), any());
     }
 
     @Test
     public void 마일리지로_결제하지않는경우_마일리지API를_호출하여_마일리지를_적립한다() {
-        //TODO - implement
+        //given
+
+        //when
+        Map<String, Object> orderItem = new HashMap<>();
+        orderItem.put("beverageId", AMERICANO_ID);
+        orderItem.put("count", 2);
+
+        Order result = subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), PAYMENT_CASH);
+
+        //then
+        verify(mockMileageApiService).saveMileages(eq(CUSTOMER_ID), mileageArgumentCaptor.capture());
+        Mileage appliedMileage = mileageArgumentCaptor.getValue();
+        assertEquals(appliedMileage.getValue(), 200.0);
     }
 
     class TestableOrderService extends OrderService {
