@@ -1,14 +1,18 @@
 package com.sds.icagile.cafe.order;
 
+import com.sds.icagile.cafe.api.mileage.Mileage;
 import com.sds.icagile.cafe.api.mileage.MileageApiService;
 import com.sds.icagile.cafe.beverage.BeverageRepository;
 import com.sds.icagile.cafe.beverage.model.Beverage;
 import com.sds.icagile.cafe.beverage.model.BeverageSize;
 import com.sds.icagile.cafe.customer.CustomerService;
+import com.sds.icagile.cafe.exception.BizException;
 import com.sds.icagile.cafe.order.model.Order;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -19,8 +23,10 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
@@ -28,6 +34,7 @@ public class OrderServiceTest {
     private static final int CUSTOMER_ID = 12345;
     private static final int PAYMENT_CASH = 1;
     private static final int PAYMENT_CARD = 2;
+    private static final int PAYMENT_MILEAGE = 3;
     private static final int AMERICANO_ID = 1;
     private static final int NOT_EXIST_BEVERAGE_ID = 2;
 
@@ -43,6 +50,9 @@ public class OrderServiceTest {
     private BeverageRepository mockBeverageRepository;
     @Mock
     private OrderItemRepository mockOrderItemRepository;
+
+    @Captor
+    ArgumentCaptor<Mileage> mileageArgumentCaptor;
 
     private boolean isLastDayOfMonthToday = false;
 
@@ -136,12 +146,35 @@ public class OrderServiceTest {
 
     @Test
     public void 마일리지로_결제하는경우_고객의마일리지가_TotalCost보다_적으면_예외를_발생한다() {
-        //TODO - implement
+        //given
+        when(mockMileageApiService.getMileages(CUSTOMER_ID)).thenReturn(1000);
+
+        //when
+        Map<String, Object> orderItem = new HashMap<>();
+        orderItem.put("beverageId", AMERICANO_ID);
+        orderItem.put("count", 2);
+
+        //then
+        assertThrows(BizException.class, () -> subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), PAYMENT_MILEAGE));
     }
 
     @Test
     public void 마일리지로_결제하는경우_고객의마일리지가_TotalCost보다_크거나같으면_마일리지API를_호출하여_마일리지를_차감한다() {
-        //TODO - implement
+        //given
+        when(mockMileageApiService.getMileages(CUSTOMER_ID)).thenReturn(3000);
+
+        //when
+        Map<String, Object> orderItem = new HashMap<>();
+        orderItem.put("beverageId", AMERICANO_ID);
+        orderItem.put("count", 2);
+
+        Order result = subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), PAYMENT_MILEAGE);
+
+        //then
+        verify(mockMileageApiService).minusMileages(eq(CUSTOMER_ID), mileageArgumentCaptor.capture());
+
+        Mileage appliedMileage = mileageArgumentCaptor.getValue();
+        assertThat(appliedMileage.getValue(), is(2000.0));
     }
 
     @Test
