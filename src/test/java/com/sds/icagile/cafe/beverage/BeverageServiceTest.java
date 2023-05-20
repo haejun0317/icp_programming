@@ -24,6 +24,15 @@ public class BeverageServiceTest {
 
     @Test
     public void whenGetBeverages_thenReturnAllBeverages() {
-        //TODO - implement
+        Beverage americano = new Beverage(1, "americano", 10, BeverageSize.SMALL);
+        Beverage latte = new Beverage(2, "latte", 20, BeverageSize.REGULAR);
+
+        given(mockBeverageRepository.findAll()).willReturn(Lists.newArrayList(
+                americano, latte
+        ));
+
+        List<Beverage> result = beverageService.getBeverages();
+
+        assertThat(result).contains(americano, latte);
     }
 }
