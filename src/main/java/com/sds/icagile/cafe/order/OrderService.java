@@ -11,6 +11,7 @@ import com.sds.icagile.cafe.exception.NotFoundException;
 import com.sds.icagile.cafe.order.model.Order;
 import com.sds.icagile.cafe.order.model.OrderItem;
 import com.sds.icagile.cafe.order.model.OrderStatus;
+import com.sds.icagile.cafe.payment.PaymentService;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -30,17 +31,21 @@ public class OrderService {
     private final CustomerService customerService;
     private final BeverageRepository beverageRepository;
     private final OrderItemRepository orderItemRepository;
+    private final PaymentService paymentService;
 
     public OrderService(OrderRepository orderRepository,
                         MileageApiService mileageApiService,
                         CustomerService customerService,
                         BeverageRepository beverageRepository,
-                        OrderItemRepository orderItemRepository) {
+                        OrderItemRepository orderItemRepository,
+                        PaymentService paymentService
+    ) {
         this.orderRepository = orderRepository;
         this.mileageApiService = mileageApiService;
         this.customerService = customerService;
         this.beverageRepository = beverageRepository;
         this.orderItemRepository = orderItemRepository;
+        this.paymentService = paymentService;
     }
 
     public Order getOrder(int orderId) {
@@ -92,51 +97,15 @@ public class OrderService {
         double totalCost = this.getDiscountedTotalCost(getTotalCost(orderItems));
         order.setTotalCost(totalCost);
 
-        double mileagePoint = getMileagePoint(payment, totalCost);
+        double mileagePoint = paymentService.getMileagePoint(payment, totalCost);
 
-        pay(customerId, payment, order, mileagePoint);
+        paymentService.pay(customerId, payment, order, mileagePoint);
 
         order.setMileagePoint(mileagePoint);
         orderRepository.save(order);
         orderItemRepository.saveAll(orderItems);
 
         return order;
-    }
-
-    private void pay(int customerId, int payment, Order order, double mileagePoint) {
-        if(payment == 3) {
-            int customerMileage = mileageApiService.getMileages(customerId);
-            if(customerMileage >= order.getTotalCost()) {
-                Mileage mileage = new Mileage(customerId, order.getId(), order.getTotalCost());
-                mileageApiService.minusMileages(customerId, mileage);
-            } else {
-                throw new BizException("mileage is not enough");
-            }
-        } else {
-            Mileage mileage = new Mileage(customerId, order.getId(), mileagePoint);
-            mileageApiService.saveMileages(customerId, mileage);
-
-            if(payment == 1) {
-                payWithCash(order, customerId);
-            } else if(payment == 2) {
-                payWithCard(order, customerId);
-            }
-        }
-    }
-
-    private double getMileagePoint(int payment, double totalCost) {
-        double mileagePoint = 0;
-        switch(payment) {
-            case 1:
-                mileagePoint = totalCost * 0.1;
-                break;
-            case 2:
-                mileagePoint = totalCost * 0.05;
-                break;
-            case 3:
-                break;
-        }
-        return mileagePoint;
     }
 
     private double getTotalCost(List<OrderItem> orderItems) {
@@ -177,12 +146,6 @@ public class OrderService {
         int todayDate = cal.get(Calendar.DATE);
 
         return lastDayOfMonth == todayDate;
-    }
-
-    private void payWithCard(Order order, int customerId) {
-    }
-
-    private void payWithCash(Order order, int customerId) {
     }
 
     /**
