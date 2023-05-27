@@ -12,6 +12,7 @@ import com.sds.icagile.cafe.order.model.Order;
 import com.sds.icagile.cafe.order.model.OrderItem;
 import com.sds.icagile.cafe.order.model.OrderStatus;
 import com.sds.icagile.cafe.payment.PaymentService;
+import com.sds.icagile.cafe.payment.PaymentType;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -94,14 +95,10 @@ public class OrderService {
 
         List<OrderItem> orderItems = getOrderItems(orderItemList, order);
 
-        double totalCost = this.getDiscountedTotalCost(getTotalCost(orderItems));
-        order.setTotalCost(totalCost);
+        order.setTotalCost(this.getDiscountedTotalCost(getTotalCost(orderItems)));
+        order.setMileagePoint(paymentService.getMileagePoint(PaymentType.fromCode(payment), order.getTotalCost()));
+        paymentService.pay(customerId, PaymentType.fromCode(payment), order, order.getMileagePoint());
 
-        double mileagePoint = paymentService.getMileagePoint(payment, totalCost);
-
-        paymentService.pay(customerId, payment, order, mileagePoint);
-
-        order.setMileagePoint(mileagePoint);
         orderRepository.save(order);
         orderItemRepository.saveAll(orderItems);
 

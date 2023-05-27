@@ -14,9 +14,6 @@ import static org.mockito.Mockito.verify;
 public class PaymentServiceTest {
 
     public static final int CUSTOMER_ID = 24264;
-    public static final int PAYMENT_CASH = 1;
-    public static final int PAYMENT_CARD = 2;
-    public static final int PAYMENT_MILEAGE = 3;
 
     private PaymentService subject;
 
@@ -42,7 +39,7 @@ public class PaymentServiceTest {
         //given
 
         //when
-        subject.getMileagePoint(PAYMENT_CASH, 200.0);
+        subject.getMileagePoint(PaymentType.CASH, 200.0);
 
         //then
         verify(mockCashPaymentService, times(1)).getMileagePoint(200.0);
@@ -53,7 +50,7 @@ public class PaymentServiceTest {
         //given
 
         //when
-        subject.getMileagePoint(PAYMENT_CARD, 200.0);
+        subject.getMileagePoint(PaymentType.CARD, 200.0);
 
         //then
         verify(mockCardPaymentService, times(1)).getMileagePoint(200.0);
@@ -64,7 +61,7 @@ public class PaymentServiceTest {
         //given
 
         //when
-        subject.getMileagePoint(PAYMENT_MILEAGE, 200.0);
+        subject.getMileagePoint(PaymentType.MILEAGE, 200.0);
 
         //then
         verify(mockMileagePaymentService, times(1)).getMileagePoint(200.0);
@@ -77,7 +74,7 @@ public class PaymentServiceTest {
         order.setTotalCost(2000.0);
 
         //when
-        subject.pay(CUSTOMER_ID, PAYMENT_CASH, order, 200.0);
+        subject.pay(CUSTOMER_ID, PaymentType.CASH, order, 200.0);
 
         //then
         verify(mockCashPaymentService, times(1)).pay(CUSTOMER_ID, order, 200.0);
@@ -90,7 +87,7 @@ public class PaymentServiceTest {
         order.setTotalCost(2000.0);
 
         //when
-        subject.pay(CUSTOMER_ID, PAYMENT_CARD, order, 100.0);
+        subject.pay(CUSTOMER_ID, PaymentType.CARD, order, 100.0);
 
         //then
         verify(mockCardPaymentService, times(1)).pay(CUSTOMER_ID, order, 100.0);
@@ -103,7 +100,7 @@ public class PaymentServiceTest {
         order.setTotalCost(2000.0);
 
         //when
-        subject.pay(CUSTOMER_ID, PAYMENT_MILEAGE, order, 0.0);
+        subject.pay(CUSTOMER_ID, PaymentType.MILEAGE, order, 0.0);
 
         //then
         verify(mockMileagePaymentService, times(1)).pay(CUSTOMER_ID, order, 0.0);

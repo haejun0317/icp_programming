@@ -17,23 +17,23 @@ public class PaymentService {
         this.mileagePaymentService = mileagePaymentService;
     }
 
-    public double getMileagePoint(int payment, double totalCost) {
-        if (payment == 1) {
+    public double getMileagePoint(PaymentType paymentType, double totalCost) {
+        if (paymentType == PaymentType.CASH) {
             return cashPaymentService.getMileagePoint(totalCost);
-        } else if (payment == 2) {
+        } else if (paymentType == PaymentType.CARD) {
             return cardPaymentService.getMileagePoint(totalCost);
-        } else if (payment == 3) {
+        } else if (paymentType == PaymentType.MILEAGE) {
             return mileagePaymentService.getMileagePoint(totalCost);
         }
         return 0.0;
     }
 
-    public void pay(int customerId, int payment, Order order, double mileagePoint) {
-        if(payment == 1) {
+    public void pay(int customerId, PaymentType paymentType, Order order, double mileagePoint) {
+        if(paymentType == PaymentType.CASH) {
             cashPaymentService.pay(customerId, order, mileagePoint);
-        } else if (payment == 2) {
+        } else if (paymentType == PaymentType.CARD) {
             cardPaymentService.pay(customerId, order, mileagePoint);
-        } else if (payment == 3) {
+        } else if (paymentType == PaymentType.MILEAGE) {
             mileagePaymentService.pay(customerId, order, mileagePoint);
         }
     }
