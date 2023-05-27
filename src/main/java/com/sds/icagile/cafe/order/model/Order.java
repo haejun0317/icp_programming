@@ -1,6 +1,10 @@
 package com.sds.icagile.cafe.order.model;
 
 import com.sds.icagile.cafe.customer.model.Customer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -9,6 +13,10 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "\"ORDER\"")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class Order {
     @Id
     @GeneratedValue
@@ -32,45 +40,6 @@ public class Order {
     @ManyToOne
     private Customer customer;
 
-    public Order() {
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public double getTotalCost() {
-        return totalCost;
-    }
-
-    public void setTotalCost(double totalCost) {
-        this.totalCost = totalCost;
-    }
-
-    public OrderStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(OrderStatus status) {
-        this.status = status;
-    }
-
-    public List<OrderItem> getOrderItems() {
-        return orderItems;
-    }
-
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
-    }
-
-    public Customer getCustomer() {
-        return customer;
-    }
-
     public void addOrderItems(List<OrderItem> orderItems) {
         this.orderItems.addAll(orderItems);
     }
@@ -83,35 +52,5 @@ public class Order {
         return id == order.id &&
                 totalCost == order.totalCost &&
                 status == order.status;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, totalCost, status);
-    }
-
-    @Override
-    public String toString() {
-        return "Order{" +
-                "id=" + id +
-                ", totalCost=" + totalCost +
-                ", status=" + status +
-                '}';
-    }
-
-    public double getMileagePoint() {
-        return mileagePoint;
-    }
-
-    public void setMileagePoint(double mileagePoint) {
-        this.mileagePoint = mileagePoint;
-    }
-
-    public int getPayment() {
-        return payment;
-    }
-
-    public void setPayment(int payment) {
-        this.payment = payment;
     }
 }

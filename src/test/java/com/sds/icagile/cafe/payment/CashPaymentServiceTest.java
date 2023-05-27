@@ -48,8 +48,9 @@ public class CashPaymentServiceTest {
     @Test
     public void 현금으로_결제하는경우_마일리지를_적립한다() {
         //given
-        Order order = new Order();
-        order.setTotalCost(2000.0);
+        Order order = Order.builder()
+                .totalCost(2000.0)
+                .build();
 
         //when
         subject.pay(CUSTOMER_ID, order, 200.0);

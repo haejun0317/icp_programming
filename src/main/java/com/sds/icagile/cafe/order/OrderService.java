@@ -6,12 +6,12 @@ import com.sds.icagile.cafe.beverage.BeverageRepository;
 import com.sds.icagile.cafe.beverage.model.Beverage;
 import com.sds.icagile.cafe.customer.CustomerService;
 import com.sds.icagile.cafe.customer.model.Customer;
-import com.sds.icagile.cafe.exception.BizException;
 import com.sds.icagile.cafe.exception.NotFoundException;
 import com.sds.icagile.cafe.order.model.Order;
 import com.sds.icagile.cafe.order.model.OrderItem;
 import com.sds.icagile.cafe.order.model.OrderStatus;
-import com.sds.icagile.cafe.payment.PaymentService;
+import com.sds.icagile.cafe.payment.IPaymentService;
+import com.sds.icagile.cafe.payment.PaymentServiceFactory;
 import com.sds.icagile.cafe.payment.PaymentType;
 import org.springframework.stereotype.Service;
 
@@ -32,21 +32,20 @@ public class OrderService {
     private final CustomerService customerService;
     private final BeverageRepository beverageRepository;
     private final OrderItemRepository orderItemRepository;
-    private final PaymentService paymentService;
+    private final PaymentServiceFactory paymentServiceFactory;
 
     public OrderService(OrderRepository orderRepository,
                         MileageApiService mileageApiService,
                         CustomerService customerService,
                         BeverageRepository beverageRepository,
                         OrderItemRepository orderItemRepository,
-                        PaymentService paymentService
-    ) {
+                        PaymentServiceFactory paymentServiceFactory) {
         this.orderRepository = orderRepository;
         this.mileageApiService = mileageApiService;
         this.customerService = customerService;
         this.beverageRepository = beverageRepository;
         this.orderItemRepository = orderItemRepository;
-        this.paymentService = paymentService;
+        this.paymentServiceFactory = paymentServiceFactory;
     }
 
     public Order getOrder(int orderId) {
@@ -75,29 +74,22 @@ public class OrderService {
         return order.getCustomer();
     }
 
-    /**
-     * 주문 생성
-     * 1. orderItem 생성 및 주문 총 비용 계산
-     * 2. 할인 프로모션 : 매월 마지막 날이면 10% 할인
-     * 3. 결제 유형에 따라 마일리지 적립
-     * 4. order, orderItem DB 저장
-     * @param customerId
-     * @param orderItemList
-     * @return
-     */
     @Transactional
     public Order create(int customerId, List<Map<String, Object>> orderItemList, int payment) {
         Customer customer = customerService.getCustomer(customerId);
-        Order order = new Order();
-        order.setStatus(OrderStatus.WAITING);
-        order.setCustomer(customer);
-        order.setPayment(payment);
+
+        Order order = Order.builder()
+                .customer(customer)
+                .status(OrderStatus.WAITING)
+                .payment(payment)
+                .build();
+
+        IPaymentService service = paymentServiceFactory.getService(PaymentType.fromCode(payment));
 
         List<OrderItem> orderItems = getOrderItems(orderItemList, order);
-
         order.setTotalCost(this.getDiscountedTotalCost(getTotalCost(orderItems)));
-        order.setMileagePoint(paymentService.getMileagePoint(PaymentType.fromCode(payment), order.getTotalCost()));
-        paymentService.pay(customerId, PaymentType.fromCode(payment), order, order.getMileagePoint());
+        order.setMileagePoint(service.getMileagePoint(order.getTotalCost()));
+        service.pay(customerId, order, order.getMileagePoint());
 
         orderRepository.save(order);
         orderItemRepository.saveAll(orderItems);

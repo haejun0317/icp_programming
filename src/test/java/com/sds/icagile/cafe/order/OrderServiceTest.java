@@ -6,7 +6,10 @@ import com.sds.icagile.cafe.beverage.model.Beverage;
 import com.sds.icagile.cafe.beverage.model.BeverageSize;
 import com.sds.icagile.cafe.customer.CustomerService;
 import com.sds.icagile.cafe.order.model.Order;
+import com.sds.icagile.cafe.payment.CashPaymentService;
 import com.sds.icagile.cafe.payment.PaymentService;
+import com.sds.icagile.cafe.payment.PaymentServiceFactory;
+import com.sds.icagile.cafe.payment.PaymentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +48,10 @@ public class OrderServiceTest {
     private OrderItemRepository mockOrderItemRepository;
 
     @Mock
-    private PaymentService mockPaymentService;
+    private PaymentServiceFactory mockPaymentServiceFactory;
+
+    @Mock
+    private CashPaymentService mockCashPaymentService;
 
     private boolean isLastDayOfMonth = false;
 
@@ -58,9 +64,11 @@ public class OrderServiceTest {
                 mockCustomerService,
                 mockBeverageRepository,
                 mockOrderItemRepository,
-                mockPaymentService);
+                mockPaymentServiceFactory);
 
         when(mockBeverageRepository.getOne(1)).thenReturn(new Beverage(1, "americano", 1000, BeverageSize.SMALL));
+        when(mockPaymentServiceFactory.getService(PaymentType.fromCode(PAYMENT_CASH))).thenReturn(mockCashPaymentService);
+
     }
 
     @Test
@@ -118,13 +126,13 @@ public class OrderServiceTest {
                 CustomerService customerService,
                 BeverageRepository beverageRepository,
                 OrderItemRepository orderItemRepository,
-                PaymentService paymentService) {
+                PaymentServiceFactory paymentServiceFactory) {
             super(orderRepository,
                     mileageApiService,
                     customerService,
                     beverageRepository,
                     orderItemRepository,
-                    paymentService);
+                    paymentServiceFactory);
         }
 
         @Override
