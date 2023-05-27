@@ -1,58 +1,40 @@
 package com.sds.icagile.cafe.payment;
 
-import org.springframework.stereotype.Service;
-
-import com.sds.icagile.cafe.api.mileage.Mileage;
-import com.sds.icagile.cafe.api.mileage.MileageApiService;
-import com.sds.icagile.cafe.exception.BizException;
 import com.sds.icagile.cafe.order.model.Order;
+import org.springframework.stereotype.Service;
 
 @Service
 public class PaymentService {
-    private final MileageApiService mileageApiService;
+    private final CashPaymentService cashPaymentService;
+    private final CardPaymentService cardPaymentService;
+    private final MileagePaymentService mileagePaymentService;
 
-    public PaymentService(MileageApiService mileageApiService) {
-        this.mileageApiService = mileageApiService;
+    public PaymentService(CashPaymentService cashPaymentService,
+                          CardPaymentService cardPaymentService,
+                          MileagePaymentService mileagePaymentService) {
+        this.cashPaymentService = cashPaymentService;
+        this.cardPaymentService = cardPaymentService;
+        this.mileagePaymentService = mileagePaymentService;
     }
 
     public double getMileagePoint(int payment, double totalCost) {
-        double mileagePoint = 0;
-        switch (payment) {
-            case 1:
-                mileagePoint = totalCost * 0.1;
-                break;
-            case 2:
-                mileagePoint = totalCost * 0.05;
-                break;
-            case 3:
-                break;
+        if (payment == 1) {
+            return cashPaymentService.getMileagePoint(totalCost);
+        } else if (payment == 2) {
+            return cardPaymentService.getMileagePoint(totalCost);
+        } else if (payment == 3) {
+            return mileagePaymentService.getMileagePoint(totalCost);
         }
-        return mileagePoint;
+        return 0.0;
     }
 
     public void pay(int customerId, int payment, Order order, double mileagePoint) {
-        if (payment == 1) {
-            Mileage mileage = new Mileage(customerId, order.getId(), mileagePoint);
-            mileageApiService.saveMileages(customerId, mileage);
-            payWithCash(order, customerId);
+        if(payment == 1) {
+            cashPaymentService.pay(customerId, order, mileagePoint);
         } else if (payment == 2) {
-            Mileage mileage = new Mileage(customerId, order.getId(), mileagePoint);
-            mileageApiService.saveMileages(customerId, mileage);
-            payWithCard(order, customerId);
+            cardPaymentService.pay(customerId, order, mileagePoint);
         } else if (payment == 3) {
-            int customerMileage = mileageApiService.getMileages(customerId);
-            if (customerMileage >= order.getTotalCost()) {
-                Mileage mileage = new Mileage(customerId, order.getId(), order.getTotalCost());
-                mileageApiService.minusMileages(customerId, mileage);
-            } else {
-                throw new BizException("mileage is not enough");
-            }
+            mileagePaymentService.pay(customerId, order, mileagePoint);
         }
-    }
-
-    private void payWithCard(Order order, int customerId) {
-    }
-
-    private void payWithCash(Order order, int customerId) {
     }
 }
