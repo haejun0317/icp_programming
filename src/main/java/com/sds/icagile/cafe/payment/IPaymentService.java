@@ -7,4 +7,5 @@ public interface IPaymentService {
     double getMileagePoint(double totalCost);
     void pay(int customerId, Order order, double mileagePoint);
 
+    PaymentType getPaymentType();
 }

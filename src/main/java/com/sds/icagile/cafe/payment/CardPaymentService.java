@@ -25,6 +25,11 @@ public class CardPaymentService implements IPaymentService {
         payWithCard(order, customerId);
     }
 
+    @Override
+    public PaymentType getPaymentType() {
+        return PaymentType.CARD;
+    }
+
     private void payWithCard(Order order, int customerId) {
     }
 }

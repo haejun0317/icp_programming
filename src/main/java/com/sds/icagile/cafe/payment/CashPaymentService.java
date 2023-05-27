@@ -25,6 +25,11 @@ public class CashPaymentService implements IPaymentService {
         payWithCash(order, customerId);
     }
 
+    @Override
+    public PaymentType getPaymentType() {
+        return PaymentType.CASH;
+    }
+
     private void payWithCash(Order order, int customerId) {
     }
 }
