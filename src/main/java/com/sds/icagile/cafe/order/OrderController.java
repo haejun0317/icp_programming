@@ -1,5 +1,8 @@
 package com.sds.icagile.cafe.order;
 
+import com.sds.icagile.cafe.order.dto.OrderDTO;
+import com.sds.icagile.cafe.order.mapper.OrderItemModelMapper;
+import com.sds.icagile.cafe.order.mapper.OrderModelMapper;
 import com.sds.icagile.cafe.order.model.Order;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,9 +24,9 @@ public class OrderController {
     }
 
     @PostMapping
-    public Order create(@RequestBody Order order) throws Exception {
-        return orderService.create(order.getCustomerId(),
-                order.getOrderItems(),
-                order.getPayment());
+    public OrderDTO create(@RequestBody OrderDTO order) {
+        return OrderModelMapper.toDTO(orderService.create(order.getCustomerId(),
+                OrderItemModelMapper.toEntity(order.getOrderItems()),
+                order.getPayment()));
     }
 }

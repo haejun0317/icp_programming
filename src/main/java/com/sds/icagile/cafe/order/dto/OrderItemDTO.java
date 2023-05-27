@@ -4,6 +4,11 @@ public class OrderItemDTO {
     private int beverageId;
     private int count;
 
+    public OrderItemDTO(int beverageId, int count) {
+        this.beverageId = beverageId;
+        this.count = count;
+    }
+
     public int getBeverageId() {
         return beverageId;
     }
@@ -19,4 +24,5 @@ public class OrderItemDTO {
     public void setCount(int count) {
         this.count = count;
     }
+
 }

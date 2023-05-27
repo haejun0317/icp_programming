@@ -4,11 +4,25 @@ import java.util.List;
 
 public class OrderDTO {
     private int customerId;
-    private List<OrderItemDTO> orderItemDTOList;
+    private int payment;
+    private List<OrderItemDTO> orderItems;
+    private int id;
 
-    public OrderDTO(int customerId, List<OrderItemDTO> orderItemDTOList) {
+    public OrderDTO() {
+    }
+
+    public OrderDTO(int customerId, int payment, List<OrderItemDTO> orderItems) {
         this.customerId = customerId;
-        this.orderItemDTOList = orderItemDTOList;
+        this.payment = payment;
+        this.orderItems = orderItems;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public int getCustomerId() {
@@ -19,11 +33,19 @@ public class OrderDTO {
         this.customerId = customerId;
     }
 
-    public List<OrderItemDTO> getOrderItemDTOList() {
-        return orderItemDTOList;
+    public int getPayment() {
+        return payment;
     }
 
-    public void setOrderItemDTOList(List<OrderItemDTO> orderItemDTOList) {
-        this.orderItemDTOList = orderItemDTOList;
+    public void setPayment(int payment) {
+        this.payment = payment;
+    }
+
+    public List<OrderItemDTO> getOrderItems() {
+        return orderItems;
+    }
+
+    public void setOrderItems(List<OrderItemDTO> orderItems) {
+        this.orderItems = orderItems;
     }
 }
