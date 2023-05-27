@@ -40,6 +40,9 @@ public class Order {
     @ManyToOne
     private Customer customer;
 
+    @Transient
+    public int customerId;
+
     public void addOrderItems(List<OrderItem> orderItems) {
         this.orderItems.addAll(orderItems);
     }

@@ -21,13 +21,9 @@ public class OrderController {
     }
 
     @PostMapping
-    public Order create(@RequestBody Map<String, Object> orderMap) throws Exception {
-
-        int customerId = (int) orderMap.get("customerId");
-        int payment = (int) orderMap.get("payment");
-
-        List<Map<String, Object>> orderItems = (List<Map<String, Object>>) orderMap.get("orderItems");
-
-        return orderService.create(customerId, orderItems, payment);
+    public Order create(@RequestBody Order order) throws Exception {
+        return orderService.create(order.getCustomerId(),
+                order.getOrderItems(),
+                order.getPayment());
     }
 }

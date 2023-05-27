@@ -6,6 +6,7 @@ import com.sds.icagile.cafe.beverage.model.Beverage;
 import com.sds.icagile.cafe.beverage.model.BeverageSize;
 import com.sds.icagile.cafe.customer.CustomerService;
 import com.sds.icagile.cafe.order.model.Order;
+import com.sds.icagile.cafe.order.model.OrderItem;
 import com.sds.icagile.cafe.payment.CashPaymentService;
 import com.sds.icagile.cafe.payment.PaymentService;
 import com.sds.icagile.cafe.payment.PaymentServiceFactory;
@@ -48,7 +49,7 @@ public class OrderServiceTest {
     private OrderItemRepository mockOrderItemRepository;
 
     @Mock
-    private PaymentServiceFactory mockPaymentServiceFactory;
+    private PaymentService mockPaymentService;
 
     @Mock
     private CashPaymentService mockCashPaymentService;
@@ -64,19 +65,17 @@ public class OrderServiceTest {
                 mockCustomerService,
                 mockBeverageRepository,
                 mockOrderItemRepository,
-                mockPaymentServiceFactory);
+                mockPaymentService);
 
         when(mockBeverageRepository.getOne(1)).thenReturn(new Beverage(1, "americano", 1000, BeverageSize.SMALL));
-        when(mockPaymentServiceFactory.getService(PaymentType.fromCode(PAYMENT_CASH))).thenReturn(mockCashPaymentService);
-
     }
 
     @Test
     public void 주문을하면_OrderItem들의_가격을_합한_TotalCost를_계산한다() {
         //given
-        Map<String, Object> orderItem = new HashMap<>();
-        orderItem.put("beverageId", 1);
-        orderItem.put("count", 2);
+        OrderItem orderItem = new OrderItem();
+        orderItem.setBeverageId(1);
+        orderItem.setCount(2);
 
         //when
         Order result = subject.create(CUSTOMER_ID, Collections.singletonList(orderItem), PAYMENT_CASH);
@@ -88,13 +87,13 @@ public class OrderServiceTest {
     @Test
     public void 등록되지않은_음료가_OrderItem에_포함되면_해당금액은_TotalCost에서_제외한다() {
         //given
-        Map<String, Object> orderItem = new HashMap<>();
-        orderItem.put("beverageId", 1);
-        orderItem.put("count", 2);
-        Map<String, Object> notValidOrderItem = new HashMap<>();
-        notValidOrderItem.put("beverageId", 2);
-        notValidOrderItem.put("count", 3);
+        OrderItem orderItem = new OrderItem();
+        orderItem.setBeverageId(1);
+        orderItem.setCount(2);
 
+        OrderItem notValidOrderItem = new OrderItem();
+        notValidOrderItem.setBeverageId(2);
+        notValidOrderItem.setCount(3);
         when(mockBeverageRepository.getOne(2)).thenReturn(null);
 
         //when
@@ -107,9 +106,10 @@ public class OrderServiceTest {
     @Test
     public void 매월_마지막날에_주문하면_TotalCost에서_10퍼센트가_할인된다() {
         //given
-        Map<String, Object> orderItem = new HashMap<>();
-        orderItem.put("beverageId", 1);
-        orderItem.put("count", 2);
+        OrderItem orderItem = new OrderItem();
+        orderItem.setBeverageId(1);
+        orderItem.setCount(2);
+
         isLastDayOfMonth = true;
 
         //when
@@ -126,13 +126,13 @@ public class OrderServiceTest {
                 CustomerService customerService,
                 BeverageRepository beverageRepository,
                 OrderItemRepository orderItemRepository,
-                PaymentServiceFactory paymentServiceFactory) {
+                PaymentService paymentService) {
             super(orderRepository,
                     mileageApiService,
                     customerService,
                     beverageRepository,
                     orderItemRepository,
-                    paymentServiceFactory);
+                    paymentService);
         }
 
         @Override

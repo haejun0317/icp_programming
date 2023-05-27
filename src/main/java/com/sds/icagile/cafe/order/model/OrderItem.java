@@ -2,11 +2,16 @@ package com.sds.icagile.cafe.order.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sds.icagile.cafe.beverage.model.Beverage;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
+@Data
+@NoArgsConstructor
 public class OrderItem {
     @Id
     @GeneratedValue
@@ -29,37 +34,8 @@ public class OrderItem {
     @JoinColumn(name = "beverage_id", referencedColumnName = "id")
     private Beverage beverage;
 
-    public OrderItem() {
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public int getCount() {
-        return count;
-    }
-
-    public void setCount(int count) {
-        this.count = count;
-    }
-
-    public Beverage getBeverage() { return beverage; }
-    public void setBeverage(Beverage beverage) {
-        this.beverage = beverage;
-    }
-
-    public Order getOrder() {
-        return order;
-    }
-
-    public void setOrder(Order order) {
-        this.order = order;
-    }
+    @Transient
+    private int beverageId;
 
     @Override
     public boolean equals(Object o) {

@@ -11,6 +11,7 @@ import com.sds.icagile.cafe.order.model.Order;
 import com.sds.icagile.cafe.order.model.OrderItem;
 import com.sds.icagile.cafe.order.model.OrderStatus;
 import com.sds.icagile.cafe.payment.IPaymentService;
+import com.sds.icagile.cafe.payment.PaymentService;
 import com.sds.icagile.cafe.payment.PaymentServiceFactory;
 import com.sds.icagile.cafe.payment.PaymentType;
 import org.springframework.stereotype.Service;
@@ -32,20 +33,20 @@ public class OrderService {
     private final CustomerService customerService;
     private final BeverageRepository beverageRepository;
     private final OrderItemRepository orderItemRepository;
-    private final PaymentServiceFactory paymentServiceFactory;
+    private final PaymentService paymentService;
 
     public OrderService(OrderRepository orderRepository,
                         MileageApiService mileageApiService,
                         CustomerService customerService,
                         BeverageRepository beverageRepository,
                         OrderItemRepository orderItemRepository,
-                        PaymentServiceFactory paymentServiceFactory) {
+                        PaymentService paymentService) {
         this.orderRepository = orderRepository;
         this.mileageApiService = mileageApiService;
         this.customerService = customerService;
         this.beverageRepository = beverageRepository;
         this.orderItemRepository = orderItemRepository;
-        this.paymentServiceFactory = paymentServiceFactory;
+        this.paymentService = paymentService;
     }
 
     public Order getOrder(int orderId) {
@@ -75,7 +76,7 @@ public class OrderService {
     }
 
     @Transactional
-    public Order create(int customerId, List<Map<String, Object>> orderItemList, int payment) {
+    public Order create(int customerId, List<OrderItem> orderItemList, int payment) {
         Customer customer = customerService.getCustomer(customerId);
 
         Order order = Order.builder()
@@ -84,12 +85,11 @@ public class OrderService {
                 .payment(payment)
                 .build();
 
-        IPaymentService service = paymentServiceFactory.getService(PaymentType.fromCode(payment));
-
         List<OrderItem> orderItems = getOrderItems(orderItemList, order);
         order.setTotalCost(this.getDiscountedTotalCost(getTotalCost(orderItems)));
-        order.setMileagePoint(service.getMileagePoint(order.getTotalCost()));
-        service.pay(customerId, order, order.getMileagePoint());
+        order.setMileagePoint(paymentService.getMileagePoint(PaymentType.fromCode(payment), order.getTotalCost()));
+
+        paymentService.pay(customerId, PaymentType.fromCode(payment), order, order.getMileagePoint());
 
         orderRepository.save(order);
         orderItemRepository.saveAll(orderItems);
@@ -105,16 +105,14 @@ public class OrderService {
         return totalCost;
     }
 
-    private List<OrderItem> getOrderItems(List<Map<String, Object>> orderItemList, Order order) {
+    private List<OrderItem> getOrderItems(List<OrderItem> orderItemList, Order order) {
         List<OrderItem> orderItems = new ArrayList<>();
-        for(Map<String, Object> orderItemMap: orderItemList) {
-            Beverage beverage = beverageRepository.getOne((Integer) orderItemMap.get("beverageId"));
+        for(OrderItem orderItem: orderItemList) {
+            Beverage beverage = beverageRepository.getOne(orderItem.getBeverageId());
             if(beverage == null) {
                 continue;
             }
 
-            OrderItem orderItem = new OrderItem();
-            orderItem.setCount((Integer) orderItemMap.get("count"));
             orderItem.setBeverage(beverage);
             orderItem.setOrder(order);
             orderItems.add(orderItem);
