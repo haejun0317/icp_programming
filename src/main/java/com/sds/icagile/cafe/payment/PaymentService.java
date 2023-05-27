@@ -17,7 +17,7 @@ public class PaymentService {
 
     public double getMileagePoint(int payment, double totalCost) {
         double mileagePoint = 0;
-        switch(payment) {
+        switch (payment) {
             case 1:
                 mileagePoint = totalCost * 0.1;
                 break;
@@ -31,22 +31,21 @@ public class PaymentService {
     }
 
     public void pay(int customerId, int payment, Order order, double mileagePoint) {
-        if(payment == 3) {
+        if (payment == 1) {
+            Mileage mileage = new Mileage(customerId, order.getId(), mileagePoint);
+            mileageApiService.saveMileages(customerId, mileage);
+            payWithCash(order, customerId);
+        } else if (payment == 2) {
+            Mileage mileage = new Mileage(customerId, order.getId(), mileagePoint);
+            mileageApiService.saveMileages(customerId, mileage);
+            payWithCard(order, customerId);
+        } else if (payment == 3) {
             int customerMileage = mileageApiService.getMileages(customerId);
-            if(customerMileage >= order.getTotalCost()) {
+            if (customerMileage >= order.getTotalCost()) {
                 Mileage mileage = new Mileage(customerId, order.getId(), order.getTotalCost());
                 mileageApiService.minusMileages(customerId, mileage);
             } else {
                 throw new BizException("mileage is not enough");
-            }
-        } else {
-            Mileage mileage = new Mileage(customerId, order.getId(), mileagePoint);
-            mileageApiService.saveMileages(customerId, mileage);
-
-            if(payment == 1) {
-                payWithCash(order, customerId);
-            } else if(payment == 2) {
-                payWithCard(order, customerId);
             }
         }
     }
